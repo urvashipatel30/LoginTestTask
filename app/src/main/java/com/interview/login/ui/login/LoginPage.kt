@@ -6,7 +6,9 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -49,76 +52,86 @@ fun LoginScreen(
     val context = LocalContext.current
     val userDataDao = appDatabase.userDataDao()
 
-    Column(
-        modifier = Modifier.padding(20.dp),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
+    Row(
+        modifier = Modifier.fillMaxHeight(),
+        verticalAlignment = Alignment.CenterVertically
     ) {
+        Column(
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
 
-        val username = remember { mutableStateOf(TextFieldValue()) }
-        val password = remember { mutableStateOf(TextFieldValue()) }
+            val username = remember { mutableStateOf(TextFieldValue()) }
+            val password = remember { mutableStateOf(TextFieldValue()) }
 
-        Text(text = "JetDevs", style = TextStyle(fontSize = 40.sp, fontFamily = FontFamily.Default))
+            Text(
+                text = "JetDevs",
+                style = TextStyle(fontSize = 40.sp, fontFamily = FontFamily.Default)
+            )
 
-        Spacer(modifier = Modifier.height(20.dp))
-        OutlinedTextField(
-            placeholder = { Text(text = "Username") },
-            value = username.value,
-            onValueChange = { username.value = it })
+            Spacer(modifier = Modifier.height(40.dp))
+            OutlinedTextField(
+                placeholder = { Text(text = "Username") },
+                value = username.value,
+                textStyle = TextStyle(color = Color.Black),
+                onValueChange = { username.value = it })
 
-        Spacer(modifier = Modifier.height(20.dp))
-        OutlinedTextField(
-            placeholder = { Text(text = "Password") },
-            value = password.value,
-            visualTransformation = PasswordVisualTransformation(),
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            onValueChange = { password.value = it })
+            Spacer(modifier = Modifier.height(20.dp))
+            OutlinedTextField(
+                placeholder = { Text(text = "Password") },
+                value = password.value,
+                visualTransformation = PasswordVisualTransformation(),
+                textStyle = TextStyle(color = Color.Black),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                onValueChange = { password.value = it })
 
-        Spacer(modifier = Modifier.height(20.dp))
-        Box(modifier = Modifier.padding(40.dp, 0.dp, 40.dp, 0.dp)) {
-            Button(
-                onClick = {
-                    viewModel.loginUser(
-                        username.value.text,
-                        password.value.text
-                    ) { success, message, response ->
-                        if (success) {
-                            // Login successful
+            Spacer(modifier = Modifier.height(100.dp))
+            Box(modifier = Modifier.padding(40.dp, 0.dp, 40.dp, 0.dp)) {
+                Button(
+                    onClick = {
+                        viewModel.loginUser(
+                            username.value.text,
+                            password.value.text
+                        ) { success, message, response ->
+                            if (success) {
+                                // Login successful
 
-                            CoroutineScope(Dispatchers.IO).launch {
-                                val responseData = response?.body()!!
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    val responseData = response?.body()!!
 
-                                val userDataEntity = UserDataEntity(
-                                    userId = responseData.data!!.userId,
-                                    userName = responseData.data.userName,
-                                    isDeleted = responseData.data.isDeleted,
-                                    xAcc = response.headers().get("X-Acc") ?: ""
-                                )
-                                userDataDao.insertUserData(userDataEntity)
-
-                                withContext(Dispatchers.Main) {
-                                    context.startActivity(
-                                        Intent(context, MainActivity::class.java).putExtra(
-                                            "user",
-                                            responseData.data.userName
-                                        )
+                                    val userDataEntity = UserDataEntity(
+                                        userId = responseData.data!!.userId,
+                                        userName = responseData.data.userName,
+                                        isDeleted = responseData.data.isDeleted,
+                                        xAcc = response.headers().get("X-Acc") ?: ""
                                     )
-                                    (context as Activity).finish()
-                                }
-                            }
+                                    userDataDao.insertUserData(userDataEntity)
 
-                        } else {
-                            // Login failed, show an error message
-                            Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                                    withContext(Dispatchers.Main) {
+                                        context.startActivity(
+                                            Intent(context, MainActivity::class.java).putExtra(
+                                                "user",
+                                                responseData.data.userName
+                                            )
+                                        )
+                                        (context as Activity).finish()
+                                    }
+                                }
+
+                            } else {
+                                // Login failed, show an error message
+                                Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
+                            }
                         }
-                    }
-                },
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-            ) {
-                Text(text = "Login")
+                    },
+                    shape = RoundedCornerShape(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    Text(text = "Login")
+                }
             }
         }
     }
